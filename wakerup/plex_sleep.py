@@ -58,11 +58,13 @@ class PlexSleep:
         self.timeout = self.config.get('timeout', 10*60)   # Default to 10 minutes before sleeping
         self.check_interval = self.config.get('check_interval', 60)  # Check every minute to update who's connected
 
-        # Get the token from the environment
+        # Get the token from the environment first, then look for it in the config file
         if 'PLEX_TOKEN' in os.environ:
             self.token = os.environ.get('PLEX_TOKEN')
+        elif 'token' in self.config:
+            self.token = self.config.get('token')
         else:
-            log.error(f'No PLEX_TOKEN environment variable set (used to connect to Plex server')
+            log.error(f'No PLEX_TOKEN environment variable set or "token" statement in config file (used to connect to Plex server')
             log.error('Exiting')
             sys.exit(-1)
 

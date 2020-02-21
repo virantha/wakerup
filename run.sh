@@ -93,7 +93,7 @@ fi
 
 echo "Configuration is complete... Starting processes..."
 # Start the first process
-python wakerup.py -v /config/config_wakerup.yml &
+python3 wakerup.py -v /config/config_wakerup.yml &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start wakerup: $status"
@@ -101,7 +101,7 @@ if [ $status -ne 0 ]; then
 fi
 
 # Start the second process
-python plex_sleep.py -v /config/config_plex_sleep.yml &
+python3 plex_sleep.py -v /config/config_plex_sleep.yml &
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start plex_sleep: $status"
