@@ -1,0 +1,24 @@
+---
+- hosts: all
+  become_method: sudo
+  vars:
+    user_name: "{{lookup ('env', 'PLEX_USER') }}"
+  vars_files:
+    - /config/passwords.yml
+  tasks:
+
+    - name: copy ssh keys 
+      authorized_key: 
+        user: "{{ user_name }}"
+        state: present
+        key: "{{ lookup ('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: add pm-suspend to sudoers
+      become: yes
+      lineinfile:
+        path: /etc/sudoers.d/pm
+        line: "{{ user_name }} ALL = NOPASSWD: /usr/sbin/pm-suspend"
+        state: present
+        mode: 0440
+        create: yes
+        validate: 'visudo -cf %s'

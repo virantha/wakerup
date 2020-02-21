@@ -1,0 +1,10 @@
+user: 'plex'
+server: '192.168.9.183'
+port: 32400
+
+# Amount of time in seconds that server is idle for before sleeping (600 = 10 minutes)
+timeout: 600
+
+# Plex auth token
+token: XXXXX
+

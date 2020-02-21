@@ -1,0 +1,14 @@
+
+plex:
+  # Minimum time (seconds) betweek successive WOL packets (so we don't spam the network with broadcasts)
+  min_interval: 10
+
+  # MAC address needed for Wake-On-Lan magic packet
+  mac_addr: "00:23:24:99:E1:0F"
+  # IP address needed for pinging to see if server is up or not
+  ip: "192.168.9.183"
+
+  # The log file location that we're monitoring for activity that signals we should wake a server 
+  log_filename: "/logs/syslog-192.168.9.1.log"
+  # The string we're looking for in the log file (in this example, it's an EdgeOS log file with destination port 32400) that signals activity
+  regex: "DPT=32400"

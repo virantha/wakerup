@@ -1,0 +1,7 @@
+watchdog
+pyyaml
+docopt
+wakeonlan
+pythonping
+plexapi
+requests
