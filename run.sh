@@ -22,30 +22,27 @@ if [ ! -f ~/.ssh/id_rsa.pub ]; then
     ln -s -f /config/ssh/id_rsa ~/.ssh/id_rsa                                                         
 fi          
 
-if [ ! -f /config/config_wakerup.yml ]; then
-    echo -n "Creating config for wakerup script /config/config_wakerup.yml ... "
-    cat <<EOF > /config/config_wakerup.yml
-    plex:
-        min_interval: 10   # interval between sending successive wol packets (seconds)
-        mac_addr: "$PLEX_MAC_ADDR"
-        ip: "$PLEX_SERVER"
-        log_filename: "$PLEX_LOG_FILENAME"
-        regex: "$PLEX_REGEX"
+echo -n "Writing config for wakerup script /config/config_wakerup.yml ... "
+cat <<EOF > /config/config_wakerup.yml
+plex:
+    min_interval: 10   # interval between sending successive wol packets (seconds)
+    mac_addr: "$PLEX_MAC_ADDR"
+    ip: "$PLEX_SERVER"
+    log_filename: "$PLEX_LOG_FILENAME"
+    regex: "$PLEX_REGEX"
 EOF
-    echo "done"
-fi
+echo "done"
 
-if [ ! -f /config/config_plex_sleep.yml ]; then
-    echo -n "Creating config for sleep script /config/config_plex_sleep.yml ... "
-    cat <<EOF > /config/config_plex_sleep.yml
-    user: "$PLEX_USER"
-    server: "$PLEX_SERVER"
-    port: 32400
-    timeout: $PLEX_IDLE_TIMEOUT
-    token: "$PLEX_TOKEN"
+echo -n "Writing config for sleep script /config/config_plex_sleep.yml ... "
+cat <<EOF > /config/config_plex_sleep.yml
+user: "$PLEX_USER"
+server: "$PLEX_SERVER"
+port: 32400
+timeout: $PLEX_IDLE_TIMEOUT
+token: "$PLEX_TOKEN"
+scan_interval: $PLEX_SCAN_INTERVAL
 EOF
-    echo "done"
-fi
+echo "done"
 
 # Create the hosts inventory
 echo "Making sure the plex server is properly configured by using ansible"
@@ -94,6 +91,7 @@ fi
 echo "Configuration is complete... Starting processes..."
 # Start the first process
 python3 wakerup.py -v /config/config_wakerup.yml &
+PROCESS_1=$!
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start wakerup: $status"
@@ -102,6 +100,7 @@ fi
 
 # Start the second process
 python3 plex_sleep.py -v /config/config_plex_sleep.yml &
+PROCESS_2=$!
 status=$?
 if [ $status -ne 0 ]; then
   echo "Failed to start plex_sleep: $status"
@@ -118,7 +117,17 @@ echo "========================================"
 echo "WakerUp is running..."
 echo "========================================"
 
-while sleep 60; do
+function cleanup()
+{
+    echo "terminating..."
+    kill -SIGTERM $PROCESS_2
+    kill -SIGTERM $PROCESS_1
+    exit 0
+}
+
+trap cleanup SIGTERM 
+
+while sleep 1; do
   ps aux |grep wakerup |grep -q -v grep
   PROCESS_1_STATUS=$?
   ps aux |grep plex_sleep |grep -q -v grep

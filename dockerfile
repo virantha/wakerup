@@ -20,4 +20,4 @@ COPY wakerup/wakerup.py \
 ENV PYTHONUNBUFFERED=1
 RUN python3 -m pip install --upgrade pip
 RUN pip3 install -r requirements.txt
-CMD ./run.sh
+CMD ["./run.sh"]
