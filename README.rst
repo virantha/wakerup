@@ -198,7 +198,7 @@ Once configured, the script runs the following tasks:
 Credits
 #######
 
-* Virantha N. Ekanayake :gh_user:`virantha` - lead developer
+* Virantha N. Ekanayake - developer
 
 Disclaimer
 ##########
