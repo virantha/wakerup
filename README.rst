@@ -57,14 +57,15 @@ wakerup.py
 ##########
 
 The wakeup script continually monitors the specified logfile using the python *watchdog* package.
-The typical way you would set this logfile up is to setup your router to remotely syslog any
-port 32400 activity to its firewall logfile.  Recent versions of Unraid have a syslog server
+The typical way you would set this logfile up is to have your router remotely syslog any
+port 32400 activity at its firewall.  Recent versions of Unraid have a syslog server
 built-in, so just enable that and have your router log to a directory on your cache drive.  This 
 script does not depend on any external tools, and uses a pure python library called wakeonlan to 
 send the magic packet.
 
 For the firewall settings, please look at your relevant manual.  As an example, I run
-and EdgeOS device (EdgeRouter), and have the following config settings:
+an EdgeOS device (EdgeRouter), and have the following config settings (only lines relevant to this
+script are being shown):
 
 .. code-block:: yaml
 
@@ -117,8 +118,8 @@ and EdgeOS device (EdgeRouter), and have the following config settings:
         }                                                                      
     }  
 
-Although you don't need to deal with the configuration file for this script with the docker,
-here is what needs to be in it for wakerup.py to work:
+Although you don't need to deal with a configuration file for this script with the docker,
+here is what needs to be in it for wakerup.py to work if you're using this script standalone:
 
 .. code-block:: yaml
 
