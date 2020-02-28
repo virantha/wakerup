@@ -8,3 +8,5 @@ timeout: 600
 # Plex auth token
 token: XXXXX
 
+# Plex library scan interval
+scan_interval: "movie:43200,tv:43200,photo:172800,artist:172800"

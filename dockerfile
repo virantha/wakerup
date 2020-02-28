@@ -1,4 +1,3 @@
-#FROM python:3-alpine
 FROM alpine:latest
 
 RUN apk update &&  \

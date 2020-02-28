@@ -63,7 +63,27 @@ class PlexSleep:
         self.port = self.config.get('port', '32400')
         self.timeout = self.config.get('timeout', 10*60)   # Default to 10 minutes before sleeping
         self.check_interval = self.config.get('check_interval', 60)  # Check every minute to update who's connected
-        self.library_scan_interval = self.config.get('scan_interval', 60*15)  # Interval between library scans
+
+        # Default scan intervals
+        self.library_scan_interval = {'movie': 60*60*12,     # 12 hours,
+                                      'show':  60*60*12,     # TV shows = 12 hours
+                                      'artist': 60*60*48,    # Music = 2 days
+                                      'photo': 60*60*24,     # Photos = 1 day,
+                                      }
+        scan_intervals = self.config.get('scan_interval', "movie:43200")
+        for entry in scan_intervals.split(','):
+            lib_type, lib_interval = entry.split(':')
+            lib_type = lib_type.strip()
+            lib_interval = lib_interval.strip()
+            self.library_scan_interval[lib_type] = int(lib_interval)
+            # Catch some common errors that a user might make
+            if lib_type == 'music' or lib_type == 'mp3':
+                log.warn(f'For scan_interval, you have used {lib_type}, but please use "artist" for Music libraries')
+            if lib_type == 'tv' or lib_type == 'tv shows':
+                log.warn(f'For scan_interval, you have used {lib_type}, but please use "show" for TV libraries')
+        
+        for lib_type, lib_interval in self.library_scan_interval.items():
+            log.info(f'Scan interval for {lib_type} libraries: {self.library_scan_interval[lib_type]} seconds')
 
         # Get the token from the environment first, then look for it in the config file
         if 'PLEX_TOKEN' in os.environ:
@@ -86,13 +106,14 @@ class PlexSleep:
             n_activity = self.get_activity_report()
             n = n_clients + n_sess + n_trans + n_activity
             self.refresh_libraries()
+
             if n>0: # People are browsing the server
                 last_client_time = time.time()
-                log.info(f'Active clients:{n_clients}|sessions:{n_sess}|transcodes:{n_trans}|scans:{n_activity}')
+                log.debug(f'Active clients:{n_clients}|sessions:{n_sess}|transcodes:{n_trans}|scans:{n_activity}')
             else:
                 idle_time = time.time() - last_client_time
                 if idle_time > self.timeout:
-                    log.info('Idle detected, suspending...')
+                    log.info(f'Plex server idle for {int(idle_time/60)} minutes. Suspending...')
                     if self._is_alive(self.server):
                         os.system(f"""ssh -o StrictHostKeyChecking=no {self.user}@{self.server} 'echo "sudo pm-suspend" | at now + 1 minute'""")
                     self.wait_for_suspend()
@@ -100,7 +121,7 @@ class PlexSleep:
                     log.info('resuming...')
                     last_client_time = time.time()
                 else:
-                    log.info(f'Plex server has been idle for {int(idle_time/60)} minutes')
+                    log.debug(f'Plex server has been idle for {int(idle_time/60)} minutes')
             time.sleep(self.check_interval)
 
     def _is_alive(self, server):
@@ -171,8 +192,6 @@ class PlexSleep:
         """Trigger a rescan of any library that was last scanned earlier than
            our library_scan_interval
         """
-        # Disabled if scan interval is zero
-        if self.library_scan_interval == 0: return
 
         # Get the library api
         end_point = '/library/sections'
@@ -180,20 +199,36 @@ class PlexSleep:
         d = json.loads(j)
         log.debug(json.dumps(d, indent=4) )
         current_time = int(time.time())
+
         # Clear out any pending refresh marks that are older than 10 minutes
-        for r, start_time in self.pending_refreshes.items():
-            if (current_time - start_time) > 10*60:
-                del self.pending_refreshes[r]
+        #   - This is for the corner case where we marked something for refresh, it started refreshing
+        #     and then it finished refreshing before this function was called again.
+        #for r, start_time in dict(self.pending_refreshes).items():
+            #if (current_time - start_time) > 10*60:
+                #del self.pending_refreshes[r]
 
         for library in d['MediaContainer']['Directory']:
             last_scan = library['scannedAt']
-            if not library['refreshing'] and library['key'] not in self.pending_refreshes:
-                # If Plex is not currently refreshing, and we haven't already requested a refresh
-                if current_time - last_scan > self.library_scan_interval:
-                    log.info(f'Starting refresh of {library["title"]}')
-                    end_point = f'/library/sections/{library["key"]}/refresh'
-                    j = self._json_query(end_point)
-                    self.pending_refreshes[library['key']] = current_time
+            library_type = library['type']
+            # Don't do anything if the scan interval is zero
+            if self.library_scan_interval[library_type] == 0: continue
+
+            if not library['refreshing']:
+                # If Plex is not currently refreshing
+                if current_time - last_scan > self.library_scan_interval.get(library_type, 60*60*24):
+                    # Library last refreshed earlier than library scan interval, so mark for refresh
+                    if library['key'] not in self.pending_refreshes:
+                        log.info(f'Starting refresh of {library["title"]}')
+                        end_point = f'/library/sections/{library["key"]}/refresh'
+                        j = self._json_query(end_point)
+                        self.pending_refreshes[library['key']] = current_time
+                    else:
+                        # We've already queued this up for a refresh so don't do anything
+                        pass
+                else:
+                    if library['key'] in self.pending_refreshes:
+                        log.info(f'Completed refresh of {library["title"]}')
+                        del self.pending_refreshes[library['key']]
 
 def sigterm_handler(_signo, _stack_frame):
     print('SIGTERM received, plex_sleep exiting...')

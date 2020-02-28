@@ -89,8 +89,15 @@ else
 fi
 
 echo "Configuration is complete... Starting processes..."
+if [ $PLEX_DEBUG == "1" ]; then
+    echo "DEBUG detected"
+    DEBUG_FLAG='-d'
+else
+    DEBUG_FLAG=''
+fi
+
 # Start the first process
-python3 wakerup.py -v /config/config_wakerup.yml &
+python3 wakerup.py -v $DEBUG_FLAG /config/config_wakerup.yml &
 PROCESS_1=$!
 status=$?
 if [ $status -ne 0 ]; then
@@ -99,7 +106,7 @@ if [ $status -ne 0 ]; then
 fi
 
 # Start the second process
-python3 plex_sleep.py -v /config/config_plex_sleep.yml &
+python3 plex_sleep.py -v $DEBUG_FLAG /config/config_plex_sleep.yml &
 PROCESS_2=$!
 status=$?
 if [ $status -ne 0 ]; then
