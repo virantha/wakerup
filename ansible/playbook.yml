@@ -13,6 +13,11 @@
         state: present
         key: "{{ lookup ('file', '~/.ssh/id_rsa.pub') }}"
 
+    - name: install pm-utils
+      become: yes
+      apt:
+        name: pm-utils
+
     - name: add pm-suspend to sudoers
       become: yes
       lineinfile:
