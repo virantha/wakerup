@@ -48,6 +48,9 @@ On Unraid, do the following:
     - You must use the *host* networking docker option, otherwise this container
       will not be able to send ICMP (pings) to your Plex server.
 
+- Docker log after a successful startup:
+    .. image:: images/img_unraid_log_setup.png
+        :width: 600px
 
     
 How it works:
