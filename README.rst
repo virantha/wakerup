@@ -161,7 +161,7 @@ A typical configuration file for this script (which the docker sets up for you a
     token: XXXXX
 
     # Plex library scan interval
-    scan_interval: "movie:43200,tv:43200,photo:172800,artist:172800
+    scan_interval: "movie:43200,tv:43200,photo:172800,artist:172800"
 
 The main piece of information obviously is the Plex server IP address and port (use the default 32400).  You will also need
 the Plex authentication token which can be found as described `here <https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/>`_ 
@@ -186,9 +186,11 @@ Once configured, the script runs the following tasks:
 - It also checks the timestamps of the libraries against the config file's scan intervals, and triggers
   a library scan for any that exceed the scan interval.
 - If there are no monitored activities running, then it puts the server to sleep via ssh with the pm-suspend command. 
-  The script relies on public key authentication to ensure there is no password prompt with the ssh command (this is 
-  automatically set up through the docker startup), and the presence of ``pm-utils`` on this server.  The suspend command
-  is actually scheduled for the next minute via the UNIX ``at`` command to allow the ssh command to exit cleanly before sleep.
+  The script relies on public key authentication to ensure there is no
+  password prompt with the ssh command, the presence of ``pm-utils`` on this
+  server, and ``pm-suspend`` being added to the sudoers file, all of which are taken care of by the docker startup script for you. The suspend
+  command is actually scheduled for the next minute via the UNIX ``at``
+  command to allow the ssh command to exit cleanly before sleep.
 - The script then waits for the server to go to sleep (monitored via ping ICMP packets), and then it waits for the
   server to start responding to pings again before starting this loop all over again.
 
