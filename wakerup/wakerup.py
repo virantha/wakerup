@@ -116,7 +116,7 @@ class WakerUp:
 class WakeupEventHandler(PatternMatchingEventHandler):
     """Subclass of the Watchdog event handler
 
-       Keeps observing the directdory of the file specified for activity.  Any file
+       Keeps observing the directory of the file specified for activity.  Any file
        creation/modification/deletion/moves trigger an event handler, where the filename
        of the triggering event is checked for the file we care about.  If it's a match,
        then we call back into the WakerUp class which handles the pattern matching of the
